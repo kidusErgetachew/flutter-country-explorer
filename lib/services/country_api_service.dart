@@ -13,6 +13,11 @@ class CountryApiService {
     'Accept': 'application/json',
   };
 
+  static List<Country>? _cache;
+  static DateTime? _lastFetchTime;
+  
+  bool isFromCache = false;
+
   void _checkResponse(http.Response response) {
     if (response.statusCode != 200) {
       throw ApiException(
@@ -23,6 +28,15 @@ class CountryApiService {
   }
 
   Future<List<Country>> getAllCountries() async {
+    if (_cache != null && _lastFetchTime != null) {
+      final difference = DateTime.now().difference(_lastFetchTime!);
+      if (difference.inMinutes < 5) {
+        isFromCache = true;
+        return _cache!;
+      }
+    }
+
+    isFromCache = false;
     try {
       final uri = Uri.https(_baseUrl, '/v3.1/all', {
         'fields': 'name,flag,region,population,capital,cca3'
@@ -34,7 +48,9 @@ class CountryApiService {
       _checkResponse(response);
       
       final List<dynamic> decodedJson = jsonDecode(response.body);
-      return decodedJson.map((json) => Country.fromJson(json)).toList();
+      _cache = decodedJson.map((json) => Country.fromJson(json)).toList();
+      _lastFetchTime = DateTime.now();
+      return _cache!;
     } on SocketException {
       throw Exception('No internet connection');
     } on TimeoutException {

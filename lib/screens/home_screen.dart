@@ -173,7 +173,19 @@ class _HomeScreenState extends State<HomeScreen> {
           } else {
             _allCountries = snapshot.data!;
             _visibleCountries = _allCountries.take(_currentPage * _itemsPerPage).toList();
-            return _buildCountryList();
+            return Column(
+              children: [
+                if (_countryService.isFromCache)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Cached data',
+                      style: TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                Expanded(child: _buildCountryList()),
+              ],
+            );
           }
         },
       ),
