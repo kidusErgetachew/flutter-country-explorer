@@ -22,7 +22,7 @@ class CountryApiService {
     }
   }
 
-  Future<List<Country>> fetchAllCountries() async {
+  Future<List<Country>> getAllCountries() async {
     try {
       final uri = Uri.https(_baseUrl, '/v3.1/all', {
         'fields': 'name,flag,region,population,capital,cca3'
@@ -44,7 +44,7 @@ class CountryApiService {
     }
   }
 
-  Future<List<Country>> searchCountries(String name) async {
+  Future<List<Country>> findCountriesByName(String name) async {
     try {
       final uri = Uri.https(_baseUrl, '/v3.1/name/$name');
       final response = await http
@@ -64,7 +64,7 @@ class CountryApiService {
     }
   }
 
-  Future<Country> fetchCountryByCode(String code) async {
+  Future<Country> getCountryDetailsByCode(String code) async {
     try {
       final uri = Uri.https(_baseUrl, '/v3.1/alpha/$code');
       final response = await http
