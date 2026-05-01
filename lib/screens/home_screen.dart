@@ -14,6 +14,11 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Country>> _countriesFuture;
   final CountryApiService _countryService = CountryApiService();
 
+  List<Country> _allCountries = [];
+  List<Country> _visibleCountries = [];
+  int _currentPage = 1;
+  final int _itemsPerPage = 20;
+
   @override
   void initState() {
     super.initState();
@@ -22,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadCountries() {
     setState(() {
+      _currentPage = 1;
       _countriesFuture = _countryService.getAllCountries();
     });
   }
@@ -84,12 +90,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCountryList(List<Country> countries) {
+  Widget _buildCountryList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      itemCount: countries.length,
+      itemCount: _visibleCountries.length + 1,
       itemBuilder: (context, index) {
-        final country = countries[index];
+        if (index == _visibleCountries.length) {
+          if (_visibleCountries.length < _allCountries.length) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _currentPage++;
+                  });
+                },
+                child: const Text('Load More'),
+              ),
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Center(
+                child: Text('No more data', style: TextStyle(color: Colors.grey)),
+              ),
+            );
+          }
+        }
+
+        final country = _visibleCountries[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 12.0),
           elevation: 2,
@@ -142,7 +171,9 @@ class _HomeScreenState extends State<HomeScreen> {
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return _buildEmptyState();
           } else {
-            return _buildCountryList(snapshot.data!);
+            _allCountries = snapshot.data!;
+            _visibleCountries = _allCountries.take(_currentPage * _itemsPerPage).toList();
+            return _buildCountryList();
           }
         },
       ),
