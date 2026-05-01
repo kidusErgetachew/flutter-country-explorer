@@ -56,7 +56,7 @@ class _SearchScreenState extends State<SearchScreen> {
       } on TimeoutException {
         if (mounted) {
           setState(() {
-            _errorMessage = 'Request timed out';
+            _errorMessage = 'Request timed out. Please try again.';
             _isLoading = false;
           });
         }
@@ -70,7 +70,23 @@ class _SearchScreenState extends State<SearchScreen> {
       } catch (e) {
         if (mounted) {
           setState(() {
-            _errorMessage = 'An unexpected error occurred';
+            if (e is ApiException) {
+              _errorMessage = 'Server error: ${e.statusCode}';
+            } else {
+              final msg = e.toString();
+              if (msg.contains('Server error:')) {
+                final match = RegExp(r'Server error: \d+').firstMatch(msg);
+                _errorMessage = match != null ? match.group(0)! : msg;
+              } else if (msg.contains('No internet connection')) {
+                _errorMessage = 'No internet connection';
+              } else if (msg.contains('Request timed out')) {
+                _errorMessage = 'Request timed out. Please try again.';
+              } else if (msg.contains('Unexpected data format')) {
+                _errorMessage = 'Unexpected data format received';
+              } else {
+                _errorMessage = 'An unexpected error occurred';
+              }
+            }
             _isLoading = false;
           });
         }
@@ -102,16 +118,30 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           if (_isLoading)
-            const CircularProgressIndicator(),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
           if (_errorMessage != null)
-            Text(_errorMessage!),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ),
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.all(16.0),
               itemCount: _results.length,
               itemBuilder: (context, index) {
                 final country = _results[index];
                 return ListTile(
-                  title: Text('${country.flag} ${country.name}'),
+                  title: Text(
+                    '${country.flag} ${country.name}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text(country.region),
                   onTap: () {
                     Navigator.push(

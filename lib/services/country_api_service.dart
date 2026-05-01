@@ -38,7 +38,7 @@ class CountryApiService {
     } on SocketException {
       throw Exception('No internet connection');
     } on TimeoutException {
-      throw Exception('Request timed out');
+      throw Exception('Request timed out. Please try again.');
     } on FormatException {
       throw Exception('Unexpected data format received');
     }
@@ -58,7 +58,7 @@ class CountryApiService {
     } on SocketException {
       throw Exception('No internet connection');
     } on TimeoutException {
-      throw Exception('Request timed out');
+      throw Exception('Request timed out. Please try again.');
     } on FormatException {
       throw Exception('Unexpected data format received');
     }
@@ -78,7 +78,7 @@ class CountryApiService {
     } on SocketException {
       throw Exception('No internet connection');
     } on TimeoutException {
-      throw Exception('Request timed out');
+      throw Exception('Request timed out. Please try again.');
     } on FormatException {
       throw Exception('Unexpected data format received');
     }

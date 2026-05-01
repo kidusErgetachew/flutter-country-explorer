@@ -1,17 +1,28 @@
-# flutter_country_explorer
+# Flutter Country Explorer
 
-A new Flutter project.
+## Student Info
+- **Name:** Kidus Ergetachew
+- **ID:** ATE/3349/15
 
-## Getting Started
+## Description
+A Flutter app that fetches and displays country data using the RestCountries API. Users can browse, search, and view detailed country information.
 
-This project is a starting point for a Flutter application.
+## Features
+- View all countries
+- Search countries by name
+- View detailed country info
+- Error handling with retry
+- Clean architecture
 
-A few resources to get you started if this is your first Flutter project:
+## Setup Instructions
+1. Run `flutter pub get` to install dependencies.
+2. Run `flutter run` to launch the application.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## API Endpoints Used
+- `GET /v3.1/all`
+- `GET /v3.1/name/{name}`
+- `GET /v3.1/alpha/{code}`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Known Limitations
+- No offline storage
+- No pagination

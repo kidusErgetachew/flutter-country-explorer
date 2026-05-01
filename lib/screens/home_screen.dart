@@ -26,6 +26,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  String _getErrorMessage(Object error) {
+    final msg = error.toString();
+    if (msg.contains('Server error:')) {
+      final match = RegExp(r'Server error: \d+').firstMatch(msg);
+      return match != null ? match.group(0)! : msg;
+    }
+    if (msg.contains('No internet connection')) return 'No internet connection';
+    if (msg.contains('Request timed out')) return 'Request timed out. Please try again.';
+    if (msg.contains('Unexpected data format')) return 'Unexpected data format received';
+    return 'An unexpected error occurred';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,16 +51,23 @@ class _HomeScreenState extends State<HomeScreen> {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(snapshot.error.toString()),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _retry,
-                    child: const Text('Retry'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _getErrorMessage(snapshot.error!),
+                      style: const TextStyle(fontSize: 16, color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _retry,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -56,11 +75,15 @@ class _HomeScreenState extends State<HomeScreen> {
           } else {
             final countries = snapshot.data!;
             return ListView.builder(
+              padding: const EdgeInsets.all(16.0),
               itemCount: countries.length,
               itemBuilder: (context, index) {
                 final country = countries[index];
                 return ListTile(
-                  title: Text('${country.flag} ${country.name}'),
+                  title: Text(
+                    '${country.flag} ${country.name}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text(country.region),
                   onTap: () {
                     Navigator.push(
