@@ -4,6 +4,7 @@ import 'dart:io';
 import '../models/country.dart';
 import '../services/country_api_service.dart';
 import 'detail_screen.dart';
+import '../services/api_exception.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -48,26 +49,38 @@ class _SearchScreenState extends State<SearchScreen> {
             _isSearching = false;
           });
         }
-      } catch (e) {
+      } on ApiException catch (e) {
         if (mounted) {
           setState(() {
-            if (e is ApiException) {
-              _searchError = 'Server error: ${e.statusCode}';
-            } else {
-              final msg = e.toString();
-              if (msg.contains('Server error:')) {
-                final match = RegExp(r'Server error: \d+').firstMatch(msg);
-                _searchError = match != null ? match.group(0)! : msg;
-              } else if (msg.contains('No internet connection')) {
-                _searchError = 'No internet connection';
-              } else if (msg.contains('Request timed out')) {
-                _searchError = 'Request timed out. Please try again.';
-              } else if (msg.contains('Unexpected data format')) {
-                _searchError = 'Unexpected data format received';
-              } else {
-                _searchError = 'An unexpected error occurred';
-              }
-            }
+            _searchError = 'Server error: ${e.statusCode}';
+            _isSearching = false;
+          });
+        }
+      } on SocketException catch (_) {
+        if (mounted) {
+          setState(() {
+            _searchError = 'No internet connection';
+            _isSearching = false;
+          });
+        }
+      } on TimeoutException catch (_) {
+        if (mounted) {
+          setState(() {
+            _searchError = 'Request timed out. Please try again.';
+            _isSearching = false;
+          });
+        }
+      } on FormatException catch (_) {
+        if (mounted) {
+          setState(() {
+            _searchError = 'Unexpected data format received';
+            _isSearching = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _searchError = 'An unexpected error occurred';
             _isSearching = false;
           });
         }

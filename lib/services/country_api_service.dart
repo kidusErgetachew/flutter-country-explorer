@@ -15,8 +15,7 @@ class CountryApiService {
 
   static List<Country>? _cache;
   static DateTime? _lastFetchTime;
-  
-  bool isFromCache = false;
+  static bool isFromCache = false;
 
   void _checkResponse(http.Response response) {
     if (response.statusCode != 200) {
@@ -52,11 +51,11 @@ class CountryApiService {
       _lastFetchTime = DateTime.now();
       return _cache!;
     } on SocketException {
-      throw Exception('No internet connection');
+      rethrow;
     } on TimeoutException {
-      throw Exception('Request timed out. Please try again.');
+      rethrow;
     } on FormatException {
-      throw Exception('Unexpected data format received');
+      rethrow;
     }
   }
 
@@ -72,11 +71,11 @@ class CountryApiService {
       final List<dynamic> decodedJson = jsonDecode(response.body);
       return decodedJson.map((json) => Country.fromJson(json)).toList();
     } on SocketException {
-      throw Exception('No internet connection');
+      rethrow;
     } on TimeoutException {
-      throw Exception('Request timed out. Please try again.');
+      rethrow;
     } on FormatException {
-      throw Exception('Unexpected data format received');
+      rethrow;
     }
   }
 
@@ -92,11 +91,11 @@ class CountryApiService {
       final List<dynamic> decodedJson = jsonDecode(response.body);
       return Country.fromJson(decodedJson.first);
     } on SocketException {
-      throw Exception('No internet connection');
+      rethrow;
     } on TimeoutException {
-      throw Exception('Request timed out. Please try again.');
+      rethrow;
     } on FormatException {
-      throw Exception('Unexpected data format received');
+      rethrow;
     }
   }
 }

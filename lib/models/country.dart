@@ -80,4 +80,30 @@ class Country {
       alpha3Code: alpha3Code ?? this.alpha3Code,
     );
   }
+
+  String get formattedLanguages {
+    if (languages.isEmpty) return 'N/A';
+    return languages.values
+        .map((v) => v.toString())
+        .join(', ');
+  }
+
+  String get formattedCurrencies {
+    if (currencies.isEmpty) return 'N/A';
+    return currencies.entries.map((entry) {
+      final val = entry.value;
+      if (val is Map) {
+        final currName = val['name']?.toString() ?? '';
+        return currName.isNotEmpty
+            ? '${entry.key} ($currName)'
+            : entry.key;
+      }
+      return entry.key;
+    }).join(', ');
+  }
+
+  String get formattedTimezones {
+    if (timezones.isEmpty) return 'N/A';
+    return timezones.map((t) => t.toString()).join(', ');
+  }
 }

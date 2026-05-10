@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:io';
 import '../models/country.dart';
 import '../services/country_api_service.dart';
+import '../services/api_exception.dart';
 import 'detail_screen.dart';
+import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,14 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getErrorMessage(Object error) {
-    final msg = error.toString();
-    if (msg.contains('Server error:')) {
-      final match = RegExp(r'Server error: \d+').firstMatch(msg);
-      return match != null ? match.group(0)! : msg;
-    }
-    if (msg.contains('No internet connection')) return 'No internet connection';
-    if (msg.contains('Request timed out')) return 'Request timed out. Please try again.';
-    if (msg.contains('Unexpected data format')) return 'Unexpected data format received';
+    if (error is SocketException) return 'No internet connection';
+    if (error is TimeoutException) return 'Request timed out. Please try again.';
+    if (error is FormatException) return 'Unexpected data format received';
+    if (error is ApiException) return 'Server error: ${error.statusCode}';
     return 'An unexpected error occurred';
   }
 
@@ -160,6 +160,17 @@ class _HomeScreenState extends State<HomeScreen> {
             Text('Explore the world', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400)),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<Country>>(
         future: _countriesFuture,
@@ -175,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _visibleCountries = _allCountries.take(_currentPage * _itemsPerPage).toList();
             return Column(
               children: [
-                if (_countryService.isFromCache)
+                if (CountryApiService.isFromCache)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8.0),
                     child: Text(

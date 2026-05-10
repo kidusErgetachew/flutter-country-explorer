@@ -1,21 +1,34 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:io';
 import '../models/country.dart';
 import '../services/country_api_service.dart';
+import '../services/api_exception.dart';
 
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   final String code;
 
   const DetailScreen({super.key, required this.code});
 
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  late Future<Country> _countryFuture;
+  final CountryApiService _countryService = CountryApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _countryFuture = _countryService.getCountryDetailsByCode(widget.code);
+  }
+
   String _getErrorMessage(Object error) {
-    final msg = error.toString();
-    if (msg.contains('Server error:')) {
-      final match = RegExp(r'Server error: \d+').firstMatch(msg);
-      return match != null ? match.group(0)! : msg;
-    }
-    if (msg.contains('No internet connection')) return 'No internet connection';
-    if (msg.contains('Request timed out')) return 'Request timed out. Please try again.';
-    if (msg.contains('Unexpected data format')) return 'Unexpected data format received';
+    if (error is SocketException) return 'No internet connection';
+    if (error is TimeoutException) return 'Request timed out. Please try again.';
+    if (error is FormatException) return 'Unexpected data format received';
+    if (error is ApiException) return 'Server error: ${error.statusCode}';
     return 'An unexpected error occurred';
   }
 
@@ -23,7 +36,7 @@ class DetailScreen extends StatelessWidget {
     return const Center(child: CircularProgressIndicator());
   }
 
-  Widget _buildErrorState(BuildContext context, Object error) {
+  Widget _buildErrorState(Object error) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -44,7 +57,12 @@ class DetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: () => (context as Element).markNeedsBuild(),
+                  onPressed: () {
+                    setState(() {
+                      _countryFuture =
+                          _countryService.getCountryDetailsByCode(widget.code);
+                    });
+                  },
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                 ),
@@ -89,14 +107,6 @@ class DetailScreen extends StatelessWidget {
   }
 
   Widget _buildCountryDetails(Country country) {
-    final timezonesStr = country.timezones.join(', ');
-    final languagesStr = country.languages.values.join(', ');
-    final currenciesStr = country.currencies.entries.map((e) {
-      final val = e.value;
-      final name = (val is Map && val.containsKey('name')) ? val['name'].toString() : val.toString();
-      return '${e.key} ($name)';
-    }).join(', ');
-
     final formattedPopulation = country.population.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]},',
@@ -130,9 +140,9 @@ class DetailScreen extends StatelessWidget {
                 _buildDetailRow(Icons.map, 'Region', country.region),
                 _buildDetailRow(Icons.people, 'Population', formattedPopulation),
                 _buildDetailRow(Icons.landscape, 'Area', '${country.area} km²'),
-                _buildDetailRow(Icons.access_time, 'Timezones', timezonesStr.isNotEmpty ? timezonesStr : 'N/A'),
-                _buildDetailRow(Icons.language, 'Languages', languagesStr.isNotEmpty ? languagesStr : 'N/A'),
-                _buildDetailRow(Icons.monetization_on, 'Currencies', currenciesStr.isNotEmpty ? currenciesStr : 'N/A'),
+                _buildDetailRow(Icons.access_time, 'Timezones', country.formattedTimezones),
+                _buildDetailRow(Icons.language, 'Languages', country.formattedLanguages),
+                _buildDetailRow(Icons.monetization_on, 'Currencies', country.formattedCurrencies),
               ],
             ),
           ),
@@ -143,20 +153,18 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final countryService = CountryApiService();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Country Details', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
       ),
       body: FutureBuilder<Country>(
-        future: countryService.getCountryDetailsByCode(code),
+        future: _countryFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return _buildLoadingIndicator();
           } else if (snapshot.hasError) {
-            return _buildErrorState(context, snapshot.error!);
+            return _buildErrorState(snapshot.error!);
           } else if (!snapshot.hasData) {
             return _buildEmptyState();
           } else {
